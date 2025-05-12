@@ -1,0 +1,77 @@
+
+# 📦 Step 1: Upload the CSV file
+from google.colab import files
+uploaded = files.upload()
+
+# 📥 Step 2: Load dataset
+import pandas as pd
+
+df = pd.read_csv('netflix_movies_detailed_up_to_2025.csv')
+print("Initial data shape:", df.shape)
+df.head()
+
+# 🧹 Step 3: Data Cleaning
+# -- Convert 'date_added' to datetime
+df['date_added'] = pd.to_datetime(df['date_added'], errors='coerce')
+
+# -- Drop duplicates
+df.drop_duplicates(inplace=True)
+
+# -- Clean text columns
+text_cols = ['title', 'director', 'cast', 'country', 'rating', 'genre']
+for col in text_cols:
+    if col in df.columns:
+        df[col] = df[col].astype(str).str.strip().str.lower()
+
+# -- Split genres for further analysis
+df['genre_list'] = df['genre'].str.split(',')
+
+# -- Extract year from date_added
+df['year_added'] = df['date_added'].dt.year
+
+# 🔍 Check cleaned data
+print("Cleaned data shape:", df.shape)
+df.info()
+📊 Charts & Visualizations:
+# 📈 Plotting setup
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set(style='whitegrid')
+plt.rcParams['figure.figsize'] = (12, 6)
+
+# 📅 Number of Movies Added Each Year
+df['year_added'].value_counts().sort_index().plot(kind='bar')
+plt.title('Number of Movies Added to Netflix Each Year')
+plt.xlabel('Year')
+plt.ylabel('Number of Movies')
+plt.xticks(rotation=45)
+plt.show()
+
+# 🎭 Top 10 Genres
+from collections import Counter
+
+genre_counts = Counter([g.strip() for sublist in df['genre_list'].dropna() for g in sublist])
+top_genres = pd.DataFrame(genre_counts.most_common(10), columns=['Genre', 'Count'])
+
+sns.barplot(x='Count', y='Genre', data=top_genres)
+plt.title('Top 10 Genres on Netflix')
+plt.xlabel('Count')
+plt.ylabel('Genre')
+plt.show()
+
+# 📊 Ratings Distribution
+df['rating'].value_counts().plot(kind='bar', color='skyblue')
+plt.title('Content Ratings Distribution')
+plt.xlabel('Rating')
+plt.ylabel('Number of Titles')
+plt.xticks(rotation=45)
+plt.show()
+
+# 🌍 Top 10 Countries
+df['country'].value_counts().head(10).plot(kind='bar', color='orange')
+plt.title('Top 10 Countries Producing Netflix Content')
+plt.xlabel('Country')
+plt.ylabel('Number of Titles')
+plt.xticks(rotation=45)
+plt.show()
+
